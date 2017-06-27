@@ -2,26 +2,22 @@
 const opus = require('node-opus');
 const yt = require('ytdl-core');
 const sql = require('sqlite');
+const express = require('express');
 const Discord = require('discord.js');
 const unirest = require('unirest');
 const os = require('os');
 const client = new Discord.Client({
   autoreconnect: true
 });
+
+const app = exports.app = express();
+let connection;
+
 var shards = new Discord.ShardClientUtil(client);
 const config = require('./config.json');
 const fs = require('fs');
 const moment = require('moment');
-const express = require('express');
-const app = exports.app = express();
-const passport = require('passport');
-const session = require('express-session');
-const cookieSession = require('cookie-session');
-const minify = require('express-minify');
-const bodyParser = require('body-parser');
-const DiscordS = require('passport-discord').Strategy;
 const http = require('http');
-let connection;
 
 var asciiart = `
 ╭━━━━╮╱╱╱╱╱╱╱╱╭━━╮╱╭╮
@@ -45,27 +41,11 @@ if (config.maintenance) {
 }
 
 
-/*app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(express.static('Web'));
-app.set('views', `${__dirname}/views`);
-app.set('view engine', 'ejs');
-app.use(minify());
-app.use('/', express.static(`${__dirname}/static`));
-app.use(cookieSession({
-    name: 'loginSession',
-    keys: [config.clientID, config.session_secret],
-    maxAge: 12 * 60 * 60 * 1000 // 48 hours
-}));*/
-
-
-    const web = exports.web = require('./web/web');
-    const auth = exports.auth = require('./web/auth');
+    const webloader = exports.webloader = require('./web/webserver');
 
 
     require('./utils/eventLoader.js')(client);
-    require('./web/web.js');
-    require('./web/auth.js');
+    require('./web/webserver.js');
 
     client.login(config.token);
 
@@ -141,8 +121,7 @@ app.use(cookieSession({
     };
 
     try {
-        //auth(config, app, passport, DiscordS, bodyParser, express, minify, cookieSession);
-        web(app, config, client, bodyParser, express);
+        webloader(config, client)
     }catch (err) {
         console.error(`An error occurred during the web interface module initialisation, Error: ${err.stack}`);
     }
